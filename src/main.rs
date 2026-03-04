@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
-use nom_exif::{Exif, ExifIter, ExifTag, MediaParser, MediaSource, TrackInfo, TrackInfoTag};
+use nom_exif::{Exif, ExifIter, ExifTag, MediaParser, MediaSource};
 use walkdir::WalkDir;
 
 #[derive(Parser)]
@@ -24,20 +24,54 @@ enum SkipReason {
 }
 
 fn extract_date(path: &Path) -> Option<String> {
+    let ext = path.extension()?.to_str()?.to_lowercase();
+    match ext.as_str() {
+        "jpg" | "jpeg" => extract_date_exif(path),
+        "mov" | "mp4" | "m4v" => extract_date_video(path),
+        _ => None,
+    }
+}
+
+fn extract_date_exif(path: &Path) -> Option<String> {
     let mut parser = MediaParser::new();
     let ms = MediaSource::file_path(path).ok()?;
-
     if ms.has_exif() {
         let iter: ExifIter = parser.parse(ms).ok()?;
         let exif: Exif = iter.into();
         let val = exif.get(ExifTag::DateTimeOriginal)?;
         let (ndt, _) = val.as_time_components()?;
         Some(ndt.format("%Y%m%d").to_string())
-    } else if ms.has_track() {
-        let info: TrackInfo = parser.parse(ms).ok()?;
-        let val = info.get(TrackInfoTag::CreateDate)?;
-        let (ndt, _) = val.as_time_components()?;
-        Some(ndt.format("%Y%m%d").to_string())
+    } else {
+        None
+    }
+}
+
+fn extract_date_video(path: &Path) -> Option<String> {
+    for tag in ["ContentCreateDate", "DateTimeOriginal", "CreateDate"] {
+        let output = std::process::Command::new("exiftool")
+            .args([&format!("-{tag}"), "-s3", &path.to_string_lossy()])
+            .output()
+            .ok()?;
+        let s = std::str::from_utf8(&output.stdout).ok()?.trim();
+        if let Some(date) = parse_exiftool_date(s) {
+            return Some(date);
+        }
+    }
+    None
+}
+
+fn parse_exiftool_date(s: &str) -> Option<String> {
+    if s.len() < 10 {
+        return None;
+    }
+    let b = s.as_bytes();
+    let sep = b[4];
+    if (sep != b':' && sep != b'-') || b[7] != sep {
+        return None;
+    }
+    let (year, month, day) = (&s[..4], &s[5..7], &s[8..10]);
+    if [year, month, day].iter().all(|p| p.chars().all(|c| c.is_ascii_digit())) {
+        Some(format!("{year}{month}{day}"))
     } else {
         None
     }
@@ -98,6 +132,10 @@ fn main() {
     if !args.folder.is_dir() {
         eprintln!("Error: '{}' is not a directory", args.folder.display());
         std::process::exit(1);
+    }
+
+    if std::process::Command::new("exiftool").arg("-ver").output().is_err() {
+        eprintln!("Warning: exiftool not found — video files will be skipped (install with: brew install exiftool)");
     }
 
     let mut renamed = 0usize;
