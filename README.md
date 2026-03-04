@@ -1,10 +1,10 @@
 # macos-file-rename
 
-Renames JPEG and video files in a directory by prefixing them with their capture/creation date.
+Copies JPEG and video files into `photos/` or `videos/` subfolders, prefixed with their capture/creation date. Originals are never modified.
 
 ```
-photo.jpg   →  20241231-photo.jpg
-video.mov   →  20241231-video.mov
+photo.jpg   →  photos/20241231-photo.jpg
+video.mov   →  videos/20241231-video.mov
 ```
 
 ## Requirements
@@ -28,16 +28,16 @@ cargo build --release
 macos-file-rename <FOLDER>
 ```
 
-Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and renames each one to `YYYYMMDD-<original_name>`. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses `exiftool` to read `ContentCreateDate`, `DateTimeOriginal`, or `CreateDate` (in priority order).
+Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and copies each one to a `photos/` or `videos/` subfolder (relative to the file's location) with a `YYYYMMDD-` date prefix. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses `exiftool` to read `ContentCreateDate`, `DateTimeOriginal`, or `CreateDate` (in priority order). Original files are left untouched.
 
 ## Behavior
 
-- **Renamed** — printed to stdout: `Renamed: old/path.jpg -> new/20241231-path.jpg`
+- **Copied** — printed to stdout: `Renamed: old/path.jpg -> old/photos/20241231-path.jpg`
 - **Skipped** — printed to stderr with a reason:
   - `already prefixed` — filename already starts with `YYYYMMDD-`
   - `no EXIF date` — file has no readable date metadata
-  - `target already exists` — a file with the new name already exists
-  - `I/O error: ...` — filesystem error during rename
+  - `target already exists` — a file with the new name already exists in the subfolder
+  - `I/O error: ...` — filesystem error during copy
 - A summary line is printed at the end: `Renamed: 3, Skipped: 1`
 
-Files without readable date metadata (screenshots, downloaded images, etc.) are silently skipped and never modified.
+Files without readable date metadata (screenshots, downloaded images, etc.) are skipped. All originals are preserved.

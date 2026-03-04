@@ -77,6 +77,13 @@ fn parse_exiftool_date(s: &str) -> Option<String> {
     }
 }
 
+fn media_subfolder(path: &Path) -> &'static str {
+    match path.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()).as_deref() {
+        Some("jpg" | "jpeg") => "photos",
+        _ => "videos",
+    }
+}
+
 fn already_prefixed(filename: &str) -> bool {
     let bytes = filename.as_bytes();
     bytes.len() > 9
@@ -105,7 +112,13 @@ fn process_file(path: &Path) -> Outcome {
     };
 
     let new_name = format!("{}-{}", date, filename);
-    let new_path = path.with_file_name(&new_name);
+    let subfolder = path.parent().unwrap().join(media_subfolder(path));
+
+    if let Err(e) = fs::create_dir_all(&subfolder) {
+        return Outcome::Skipped { path: path.to_path_buf(), reason: SkipReason::IoError(e) };
+    }
+
+    let new_path = subfolder.join(&new_name);
 
     if new_path.exists() {
         return Outcome::Skipped {
@@ -114,8 +127,8 @@ fn process_file(path: &Path) -> Outcome {
         };
     }
 
-    match fs::rename(path, &new_path) {
-        Ok(()) => Outcome::Renamed {
+    match fs::copy(path, &new_path) {
+        Ok(_) => Outcome::Renamed {
             from: path.to_path_buf(),
             to: new_path,
         },
