@@ -1,4 +1,4 @@
-# macos-file-rename
+# chronofile
 
 Copies JPEG and video files into `photos/` or `videos/` subfolders, prefixed with their capture/creation date. Originals are never modified.
 
@@ -19,13 +19,13 @@ brew install exiftool
 
 ```bash
 cargo build --release
-# Binary is at ./target/release/macos-file-rename
+# Binary is at ./target/release/chronofile
 ```
 
 ## Usage
 
 ```
-macos-file-rename <FOLDER>
+chronofile <FOLDER>
 ```
 
 Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and copies each one to a `photos/` or `videos/` subfolder (relative to the file's location) with a `YYYYMMDD-` date prefix. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses `exiftool` to read `ContentCreateDate`, `DateTimeOriginal`, or `CreateDate` (in priority order). Original files are left untouched.

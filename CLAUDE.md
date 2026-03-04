@@ -15,7 +15,7 @@ cargo test            # run tests (none currently)
 
 Run the tool:
 ```bash
-./target/debug/macos-file-rename <FOLDER>
+./target/debug/chronofile <FOLDER>
 ```
 
 ## Architecture
