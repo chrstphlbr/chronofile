@@ -70,7 +70,10 @@ fn parse_exiftool_date(s: &str) -> Option<String> {
         return None;
     }
     let (year, month, day) = (&s[..4], &s[5..7], &s[8..10]);
-    if [year, month, day].iter().all(|p| p.chars().all(|c| c.is_ascii_digit())) {
+    if [year, month, day]
+        .iter()
+        .all(|p| p.chars().all(|c| c.is_ascii_digit()))
+    {
         Some(format!("{year}{month}{day}"))
     } else {
         None
@@ -78,7 +81,12 @@ fn parse_exiftool_date(s: &str) -> Option<String> {
 }
 
 fn media_subfolder(path: &Path) -> &'static str {
-    match path.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()).as_deref() {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .as_deref()
+    {
         Some("jpg" | "jpeg") => "photos",
         _ => "videos",
     }
@@ -86,9 +94,7 @@ fn media_subfolder(path: &Path) -> &'static str {
 
 fn already_prefixed(filename: &str) -> bool {
     let bytes = filename.as_bytes();
-    bytes.len() > 9
-        && bytes[..8].iter().all(|b| b.is_ascii_digit())
-        && bytes[8] == b'-'
+    bytes.len() > 9 && bytes[..8].iter().all(|b| b.is_ascii_digit()) && bytes[8] == b'-'
 }
 
 fn process_file(path: &Path) -> Outcome {
@@ -107,7 +113,7 @@ fn process_file(path: &Path) -> Outcome {
             return Outcome::Skipped {
                 path: path.to_path_buf(),
                 reason: SkipReason::NoExifDate,
-            }
+            };
         }
     };
 
@@ -115,7 +121,10 @@ fn process_file(path: &Path) -> Outcome {
     let subfolder = path.parent().unwrap().join(media_subfolder(path));
 
     if let Err(e) = fs::create_dir_all(&subfolder) {
-        return Outcome::Skipped { path: path.to_path_buf(), reason: SkipReason::IoError(e) };
+        return Outcome::Skipped {
+            path: path.to_path_buf(),
+            reason: SkipReason::IoError(e),
+        };
     }
 
     let new_path = subfolder.join(&new_name);
@@ -147,8 +156,14 @@ fn main() {
         std::process::exit(1);
     }
 
-    if std::process::Command::new("exiftool").arg("-ver").output().is_err() {
-        eprintln!("Warning: exiftool not found — video files will be skipped (install with: brew install exiftool)");
+    if std::process::Command::new("exiftool")
+        .arg("-ver")
+        .output()
+        .is_err()
+    {
+        eprintln!(
+            "Warning: exiftool not found — video files will be skipped (install with: brew install exiftool)"
+        );
     }
 
     let mut renamed = 0usize;
@@ -162,7 +177,12 @@ fn main() {
             e.path()
                 .extension()
                 .and_then(|ext| ext.to_str())
-                .map(|ext| matches!(ext.to_lowercase().as_str(), "jpg" | "jpeg" | "mov" | "mp4" | "m4v"))
+                .map(|ext| {
+                    matches!(
+                        ext.to_lowercase().as_str(),
+                        "jpg" | "jpeg" | "mov" | "mp4" | "m4v"
+                    )
+                })
                 .unwrap_or(false)
         })
     {
