@@ -3,7 +3,11 @@
     "allow": [
       "Bash(cargo build:*)",
       "Bash(cargo check:*)",
-      "Bash(./target/release/macos-file-rename:*)"
+      "Bash(./target/release/macos-file-rename:*)",
+      "WebSearch",
+      "WebFetch(domain:users.rust-lang.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.rs)"
     ]
   }
 }

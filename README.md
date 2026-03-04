@@ -20,7 +20,7 @@ cargo build --release
 macos-file-rename <FOLDER>
 ```
 
-Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and renames each one to `YYYYMMDD-<original_name>`. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses the `CreateDate` track metadata.
+Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and renames each one to `YYYYMMDD-<original_name>`. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses `exiftool` to read `ContentCreateDate`, `DateTimeOriginal`, or `CreateDate` (in priority order).
 
 ## Behavior
 
