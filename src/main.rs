@@ -1,13 +1,12 @@
 use std::fs;
-use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
-use exif::{DateTime, In, Reader, Tag, Value};
+use nom_exif::{Exif, ExifIter, ExifTag, MediaParser, MediaSource, TrackInfo, TrackInfoTag};
 use walkdir::WalkDir;
 
 #[derive(Parser)]
-#[command(about = "Rename JPEGs to YYYYMMDD-<original_name>")]
+#[command(about = "Rename media files to YYYYMMDD-<original_name>")]
 struct Args {
     folder: PathBuf,
 }
@@ -25,15 +24,23 @@ enum SkipReason {
 }
 
 fn extract_date(path: &Path) -> Option<String> {
-    let file = fs::File::open(path).ok()?;
-    let mut buf = BufReader::new(file);
-    let exif = Reader::new().read_from_container(&mut buf).ok()?;
-    let field = exif.get_field(Tag::DateTimeOriginal, In::PRIMARY)?;
-    if let Value::Ascii(ref vec) = field.value {
-        let dt = DateTime::from_ascii(vec.first()?).ok()?;
-        return Some(format!("{:04}{:02}{:02}", dt.year, dt.month, dt.day));
+    let mut parser = MediaParser::new();
+    let ms = MediaSource::file_path(path).ok()?;
+
+    if ms.has_exif() {
+        let iter: ExifIter = parser.parse(ms).ok()?;
+        let exif: Exif = iter.into();
+        let val = exif.get(ExifTag::DateTimeOriginal)?;
+        let (ndt, _) = val.as_time_components()?;
+        Some(ndt.format("%Y%m%d").to_string())
+    } else if ms.has_track() {
+        let info: TrackInfo = parser.parse(ms).ok()?;
+        let val = info.get(TrackInfoTag::CreateDate)?;
+        let (ndt, _) = val.as_time_components()?;
+        Some(ndt.format("%Y%m%d").to_string())
+    } else {
+        None
     }
-    None
 }
 
 fn already_prefixed(filename: &str) -> bool {
@@ -104,7 +111,7 @@ fn main() {
             e.path()
                 .extension()
                 .and_then(|ext| ext.to_str())
-                .map(|ext| matches!(ext.to_lowercase().as_str(), "jpg" | "jpeg"))
+                .map(|ext| matches!(ext.to_lowercase().as_str(), "jpg" | "jpeg" | "mov" | "mp4" | "m4v"))
                 .unwrap_or(false)
         })
     {

@@ -20,9 +20,9 @@ Run the tool:
 
 ## Architecture
 
-Single-file CLI (`src/main.rs`) that renames JPEG/JPG files by prefixing them with their EXIF `DateTimeOriginal` date in `YYYYMMDD-` format (e.g. `photo.jpg` → `20241231-photo.jpg`).
+Single-file CLI (`src/main.rs`) that renames JPEG and video files by prefixing them with their capture/creation date in `YYYYMMDD-` format (e.g. `photo.jpg` → `20241231-photo.jpg`).
 
-**Flow:** parse args → walk directory recursively → filter `.jpg`/`.jpeg` (case-insensitive) → for each file: check if already prefixed, extract EXIF date, check target doesn't exist, rename.
+**Flow:** parse args → walk directory recursively → filter `.jpg`/`.jpeg`/`.mov`/`.mp4`/`.m4v` (case-insensitive) → for each file: check if already prefixed, extract date, check target doesn't exist, rename.
 
 **Key types:**
 - `Args` (clap derive) — single positional `folder: PathBuf`
@@ -30,8 +30,8 @@ Single-file CLI (`src/main.rs`) that renames JPEG/JPG files by prefixing them wi
 - `SkipReason` — `AlreadyPrefixed`, `NoExifDate`, `TargetExists`, `IoError`
 
 **Key functions:**
-- `extract_date(path)` — reads EXIF via `kamadak-exif`, returns `Option<String>` formatted as `YYYYMMDD`
+- `extract_date(path)` — uses `nom-exif` `MediaParser`/`MediaSource`; for EXIF files reads `ExifTag::DateTimeOriginal`, for track-based files (video) reads `TrackInfoTag::CreateDate`; returns `Option<String>` formatted as `YYYYMMDD`
 - `already_prefixed(filename)` — checks if filename starts with 8 ASCII digits + `-`
 - `process_file(path)` — orchestrates the check/extract/rename logic, returns `Outcome`
 
-**Dependencies:** `clap` (CLI), `kamadak-exif` (EXIF reading), `walkdir` (recursive traversal)
+**Dependencies:** `clap` (CLI), `nom-exif` (EXIF + video metadata), `walkdir` (recursive traversal)

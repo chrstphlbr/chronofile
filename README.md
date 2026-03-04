@@ -1,9 +1,10 @@
 # macos-file-rename
 
-Renames JPEG files in a directory by prefixing them with their EXIF capture date.
+Renames JPEG and video files in a directory by prefixing them with their capture/creation date.
 
 ```
-photo.jpg  →  20241231-photo.jpg
+photo.jpg   →  20241231-photo.jpg
+video.mov   →  20241231-video.mov
 ```
 
 ## Installation
@@ -19,7 +20,7 @@ cargo build --release
 macos-file-rename <FOLDER>
 ```
 
-Recursively scans `<FOLDER>` for `.jpg`/`.jpeg` files (case-insensitive) and renames each one to `YYYYMMDD-<original_name>` using the `DateTimeOriginal` EXIF tag.
+Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` files (case-insensitive) and renames each one to `YYYYMMDD-<original_name>`. For photos, uses the `DateTimeOriginal` EXIF tag; for videos, uses the `CreateDate` track metadata.
 
 ## Behavior
 
@@ -31,4 +32,4 @@ Recursively scans `<FOLDER>` for `.jpg`/`.jpeg` files (case-insensitive) and ren
   - `I/O error: ...` — filesystem error during rename
 - A summary line is printed at the end: `Renamed: 3, Skipped: 1`
 
-Files without a readable EXIF date (screenshots, downloaded images, etc.) are silently skipped and never modified.
+Files without readable date metadata (screenshots, downloaded images, etc.) are silently skipped and never modified.
