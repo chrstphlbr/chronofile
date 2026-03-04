@@ -47,7 +47,7 @@ fn extract_date_exif(path: &Path) -> Option<String> {
 }
 
 fn extract_date_video(path: &Path) -> Option<String> {
-    for tag in ["ContentCreateDate", "DateTimeOriginal", "CreateDate"] {
+    for tag in ["CreationDate", "DateTimeOriginal", "CreateDate"] {
         let output = std::process::Command::new("exiftool")
             .args([&format!("-{tag}"), "-s3", &path.to_string_lossy()])
             .output()
