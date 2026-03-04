@@ -7,6 +7,14 @@ photo.jpg   →  20241231-photo.jpg
 video.mov   →  20241231-video.mov
 ```
 
+## Requirements
+
+- [exiftool](https://exiftool.org/) — required for video date extraction
+
+```bash
+brew install exiftool
+```
+
 ## Installation
 
 ```bash
@@ -27,7 +35,7 @@ Recursively scans `<FOLDER>` for `.jpg`, `.jpeg`, `.mov`, `.mp4`, and `.m4v` fil
 - **Renamed** — printed to stdout: `Renamed: old/path.jpg -> new/20241231-path.jpg`
 - **Skipped** — printed to stderr with a reason:
   - `already prefixed` — filename already starts with `YYYYMMDD-`
-  - `no EXIF date` — file has no `DateTimeOriginal` EXIF tag
+  - `no EXIF date` — file has no readable date metadata
   - `target already exists` — a file with the new name already exists
   - `I/O error: ...` — filesystem error during rename
 - A summary line is printed at the end: `Renamed: 3, Skipped: 1`
